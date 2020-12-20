@@ -33,3 +33,12 @@ export class Shops {
         this.url = shopInfo.shopUrl;
     }
 }
+
+export class Params {
+    constructor(info,rule) {
+        this.image = info.images ? info.images[0] : '';
+        this.infos = info.set;
+        this.sizes = rule.tables;
+
+    }
+}

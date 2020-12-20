@@ -38,8 +38,7 @@ export default {
 
 <style>
     .info {
-        margin: 12px 10px;
-        padding-bottom: 15px;
+        padding: 12px 10px 5px 10px;
         border-bottom: 3px solid #e8e8e8;
     }
 
