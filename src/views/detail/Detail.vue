@@ -1,20 +1,25 @@
 <template>
   <div id="detail">
-    <detail-nav-bar />
+    <detail-nav-bar @itemClick="itemClick" ref="nav"/>
     <scroll class="content" ref="scroll" @scroll="backTopShow">
+      <!-- <div>{{$store.state.carList}}</div> -->
       <detail-swiper :topImages="topImages" class="detail-swiper"/>
       <detail-base-info :goods="goods" />
       <detail-shop-info :shops="shops" />
       <detail-good-info :detailInfo="detailInfo" @imgLoad="imageLoad"/>
-      <detail-param-info :paramInfo="paramInfo" />
-      <detail-comment-info :commentInfo="commentInfo"/>
+      <detail-param-info :paramInfo="paramInfo" ref="params"/>
+      <detail-comment-info :commentInfo="commentInfo" ref="comment"/>
+      <goods-list  class="goods-list" :goods="recommend" ref="recommend" :isrecommend='true'/>
     </scroll>
+    <detail-bottom-bar @shopcarClick='shopcarClick'/>
     <back-top @click.native="backTopClick" v-show="backTopIsShow"/>
+    <toast :message="message" :isShow="isShow"/>
   </div>
 </template>
 
 <script>
 import Scroll from "@/components/common/scroll/Scroll";
+import Toast from "@/components/common/toast/Toast"
 
 import BackTop from '@/components/content/backTop/BackTop'
 import DetailNavBar from "./childComps/DetailNavBar";
@@ -24,8 +29,12 @@ import DetailShopInfo from "./childComps/DetailShopInfo";
 import DetailGoodInfo from "./childComps/DetailGoodInfo";
 import DetailParamInfo from "./childComps/DetailParamInfo"
 import DetailCommentInfo from "./childComps/DetailCommentInfo"
+import GoodsList from "@/components/content/goods/GoodsList"
+import DetailBottomBar from "./childComps/DetailBottomBar"
 
-import { getDetailData, Goods, Shops, Params } from "@/network/detail.js";
+import { getDetailData, Goods, Shops, Params, getRecommend } from "@/network/detail.js";
+import { imgListenerMixin } from '@/common/mixin'
+import { debounce } from "@/common/utils"
 
 export default {
   name: "Detail",
@@ -38,9 +47,12 @@ export default {
     DetailParamInfo,
     Scroll,
     BackTop,
-    DetailCommentInfo
+    DetailCommentInfo,
+    GoodsList,
+    DetailBottomBar,
+    Toast
   },
-  data() {
+  data(){
     return {
       iid: null,
       topImages: [],
@@ -49,7 +61,13 @@ export default {
       detailInfo: {},
       paramInfo: {},
       backTopIsShow: false,
-      commentInfo: {}
+      commentInfo: {},
+      recommend: [],
+      itemClickYs:[],
+      getItemClcikY: null,
+      currentIndex: 0,
+      message: '',
+      isShow: false
     };
   },
   created() {
@@ -77,20 +95,74 @@ export default {
           data.itemParams.rule)
       if(data.rate.cRate !== 0) {
           this.commentInfo = data.rate.list[0]
-      }
-      
+      }   
     });
+
+    getRecommend().then(res => {
+      this.recommend = res.data.list;
+      // console.log(res)
+    })
+
+    this.getItemClcikY = () => {
+      this.itemClickYs = [];
+      this.itemClickYs.push(0)
+      this.itemClickYs.push(this.$refs.params.$el.offsetTop)
+      this.itemClickYs.push(this.$refs.comment.$el.offsetTop)
+      this.itemClickYs.push(this.$refs.recommend.$el.offsetTop)
+      // console.log(this.itemClickYs)
+    }
   },
+  mixins: [imgListenerMixin],
   methods: {
     imageLoad() {
       this.$refs.scroll.refresh();
+      this.getItemClcikY();
     },
     backTopClick() {
         this.$refs.scroll.scrollTo(0,0,200)
     },
     backTopShow(position) {
+        const positionY = -position.y
         // console.log(position)
-        this.backTopIsShow = -position.y > 1000;
+        this.backTopIsShow = positionY > 1000;
+        
+        // 导航内容联动
+        for(let i = 0;i < this.itemClickYs.length;i++) {
+          if(this.currentIndex !== i && ((i < this.itemClickYs.length-1 && positionY >=this.itemClickYs[i] &&  positionY < this.itemClickYs[i+1]) || (i == this.itemClickYs.length-1 && positionY >= this.itemClickYs[i]))) {
+            this.currentIndex = i;
+            this.$refs.nav.currentIndex = this.currentIndex;
+          }
+        }
+
+    },
+    itemClick(index) {
+      // console.log(index);
+      this.$refs.scroll.scrollTo(0,-this.itemClickYs[index],200)
+    },
+    shopcarClick() {
+      // console.log('*******')
+      //获取购物车产品信息
+      const product = {};
+      product.image = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.desc;
+      product.price = this.goods.realPrice;
+      product.iid = this.iid;
+
+      //将商品信息添加到购物车
+      // this.$store.commit("addCart",product);
+      this.$store.dispatch('addCart', product).then(res => {
+        this.message = res;
+        this.isShow = true;
+
+        setTimeout(() => {
+          this.isShow = false;
+          this.message = '';
+        },1500)
+      })
+
+      //弹出添加购物车成功
+  
     }
   },
 };
@@ -116,4 +188,10 @@ export default {
 .detail-swiper {
     height: 300px;
 }
+
+.goods-list {
+  clear: both;
+}
+
+
 </style>

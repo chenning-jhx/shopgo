@@ -8,25 +8,27 @@
       </div>
     </div>
 
-    <div class="comment-user">
+    <div class="comment-user" v-if="commentInfo.user">
       <img :src="commentInfo.user.avatar" alt="" />
       <span>{{ commentInfo.user.uname }}</span>
     </div>
 
     <div class="comment-detail">
-        <div class="comment.content">{{commentInfo.content}}</div>
-        <div>
-            <span>{{commentInfo.created}}</span>
-            <span>{{commentInfo.style}}</span>
-        </div>
-        <div v-for="(item, index) in commentInfo.images" :key="index">
-            <img :src="item" alt="">
-        </div>
+      <div class="comment-content">{{ commentInfo.content }}</div>
+      <div class="comment-desc">
+        <span>{{ commentInfo.created | showDate }}</span>
+        <span>{{ commentInfo.style }}</span>
+      </div>
+      <div v-for="(item, index) in commentInfo.images" :key="index" class="info-imgs">
+        <img :src="item" alt="" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { formatDate } from "@/common/utils";
+
 export default {
   name: "DetailCommentInfo",
   props: {
@@ -37,6 +39,12 @@ export default {
       },
     },
   },
+  filters: {
+      showDate(value) {
+        let date = new Date(value * 1000);
+        return formatDate(date, "yyyy-MM-dd hh:mm");
+      },
+    },
 };
 </script>
 
@@ -71,5 +79,34 @@ export default {
   width: 48px;
   height: 48px;
   vertical-align: middle;
+}
+
+.comment-user span {
+  font-size: 16px;
+}
+
+.comment-detail {
+  margin: 10px 10px;
+}
+
+.comment-content {
+  font-size: 16px;
+}
+
+.comment-desc {
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.comment-desc span:nth-child(1) {
+  margin-right: 13px;
+}
+
+.info-imgs img {
+  float: left;
+  width: 70px;
+  height: 70px;
+  margin-right: 5px;
+
 }
 </style>

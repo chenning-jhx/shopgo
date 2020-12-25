@@ -8,7 +8,7 @@
       <recommend-view :recommends="recommends" />
       <feature-view />
       <tab-control :titles="['流行', '新款', '精选']" @tabClick="tabClick" ref="tabControl2"/>
-      <goods-list :goods="showgoods" />
+      <goods-list :goods="showgoods" :isrecommend='false'/>
     </scroll>
 
     <back-top @click.native="backTopClick" v-show="isShow"/>
@@ -27,6 +27,8 @@ import Scroll from "@/components/common/scroll/Scroll";
 import BackTop from "@/components/content/backTop/BackTop"
 
 import { getHomeMultidata, getHomeData } from "@/network/home";
+// import { imgListenerMixin } from "@/common/mixin" 
+import { debounce } from "@/common/utils"
 
 export default {
   name: "Home",
@@ -73,6 +75,7 @@ export default {
     
   },
   activated() {
+    // console.log('*********')
     this.$refs.scroll.scrollTo(0, this.saveY, 0);
     this.$refs.scroll.refresh();
   },
@@ -82,13 +85,13 @@ export default {
   },
   mounted() {
     //监听item中图片加载事件
-    const refresh =this.debounce(this.$refs.scroll.refresh, 200) 
+    const refresh = debounce(this.$refs.scroll.refresh, 200) 
     this.$bus.$on("itemImgLoad", () => {
       // console.log('---------')
       refresh()
     });
   },
-
+  // mixins: [imgListenerMixin],
   methods: {
     /**
      * 绑定事件
@@ -128,15 +131,15 @@ export default {
     },
 
     //防抖函数
-    debounce(func, delay) {
-      let timer = null
-      return function(...args) {
-        if(timer) setTimeout(timer);
-        timer = setTimeout(() => {
-          func.apply(this,args)
-        },delay)
-      }
-    },
+    // debounce(func, delay) {
+    //   let timer = null
+    //   return function(...args) {
+    //     if(timer) setTimeout(timer);
+    //     timer = setTimeout(() => {
+    //       func.apply(this,args)
+    //     },delay)
+    //   }
+    // },
     swiperImgLoad() {
       this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
     },
